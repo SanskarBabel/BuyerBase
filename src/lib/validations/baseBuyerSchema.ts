@@ -11,7 +11,7 @@ export const statusSchema = z.enum(['New', 'Qualified', 'Contacted', 'Visited', 
 export const phoneRegex = /^\d{10,15}$/;
 export const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const createBuyerSchema = z.object({
+const baseBuyerSchema = z.object({
   fullName: z.string()
     .min(2, 'Full name must be at least 2 characters')
     .max(80, 'Full name must not exceed 80 characters')
@@ -41,27 +41,51 @@ export const createBuyerSchema = z.object({
     .max(1000, 'Notes must not exceed 1000 characters')
     .optional(),
   tags: z.array(z.string()).default([]),
-}).refine((data) => {
-  // BHK is required for Apartment and Villa
-  if (['Apartment', 'Villa'].includes(data.propertyType) && !data.bhk) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'BHK is required for Apartment and Villa property types',
-  path: ['bhk'],
-}).refine((data) => {
-  // Budget max should be >= budget min
-  if (data.budgetMin && data.budgetMax && data.budgetMax < data.budgetMin) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'Maximum budget must be greater than or equal to minimum budget',
-  path: ['budgetMax'],
 });
 
-export const updateBuyerSchema = createBuyerSchema.partial();
+export const createBuyerSchema = baseBuyerSchema
+  .refine((data) => {
+    // BHK is required for Apartment and Villa
+    if (['Apartment', 'Villa'].includes(data.propertyType) && !data.bhk) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'BHK is required for Apartment and Villa property types',
+    path: ['bhk'],
+  })
+  .refine((data) => {
+    // Budget max should be >= budget min
+    if (data.budgetMin && data.budgetMax && data.budgetMax < data.budgetMin) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'Maximum budget must be greater than or equal to minimum budget',
+    path: ['budgetMax'],
+  });
+
+export const updateBuyerSchema = baseBuyerSchema.partial()
+  .refine((data) => {
+    // BHK is required for Apartment and Villa
+    if (['Apartment', 'Villa'].includes(data.propertyType as string) && !data.bhk) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'BHK is required for Apartment and Villa property types',
+    path: ['bhk'],
+  })
+  .refine((data) => {
+    // Budget max should be >= budget min
+    if (data.budgetMin && data.budgetMax && data.budgetMax < data.budgetMin) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'Maximum budget must be greater than or equal to minimum budget',
+    path: ['budgetMax'],
+  });
 
 export const buyerFiltersSchema = z.object({
   page: z.number().int().positive().default(1),
